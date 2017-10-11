@@ -66,23 +66,43 @@ namespace a
                 string requestString = Read(client);
                 dynamic json = JsonConvert.DeserializeObject<dynamic>(requestString);
 
-                Response response = new Response();
+                ConstructResponse(json, out Response response);
 
-                if (json.method == "read") 
+                Send(client, response.ToJson());
+
+                client.Close();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                //throw;
+            }
+        }
+
+        private void ConstructResponse(dynamic json, out Response response)
+        {
+            response = new Response();
+
+            try
+            {
+                string method = json.method;
+                string path   = json.path;
+                int    date   = json.date;
+
+                string lastToken = Path.GetFileName(path);
+
+                if (method == "read")
                 {
-                    string path = json.path;
-                    string lastToken = Path.GetFileName(path);
-
                     if (lastToken == "categories")
                     {
                         response.Status = Response.StatusCode.Ok;
                         response.Body = Category.Data;
-                    } 
+                    }
                     else if (int.TryParse(lastToken, out int id))
                     {
                         var cat = Category.Data.Find(x => x.Id == id);
 
-                        if (cat != null) 
+                        if (cat != null)
                         {
                             response.Status = Response.StatusCode.Ok;
                             response.Body = cat;
@@ -93,17 +113,29 @@ namespace a
                             response.Status = Response.StatusCode.NotFound;
                         }
                     }
+                    else
+                    {
+                        throw new Exception();
+                    }
                 }
-               
+                else if (method == "create")
+                {
+                    if (lastToken != "categories")
+                    {
+                        throw new Exception();
+                    }
 
-                Send(client, response.ToJson());
+                    dynamic input = JsonConvert.DeserializeObject<dynamic>(json.body);
+                    Category newCat = Category.Create(input.name);
 
-                client.Close();
+                    response.Status = Response.StatusCode.Created;
+                    response.Body = newCat;
+                }
             }
-            catch (Exception e)
+            catch
             {
-                Console.WriteLine(e);
-                //throw;
+                response.Status = Response.StatusCode.BadRequest;
+                response.Reasons.Add("Bad Request");
             }
         }
 
