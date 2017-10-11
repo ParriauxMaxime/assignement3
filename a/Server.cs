@@ -64,7 +64,8 @@ namespace a
             try
             {
                 string requestString = Read(client);
-                dynamic json = JsonConvert.DeserializeObject<dynamic>(requestString);
+                Console.WriteLine($"Got {requestString}");
+                Request json = JsonConvert.DeserializeObject<Request>(requestString);
 
                 ConstructResponse(json, out Response response);
 
@@ -79,7 +80,7 @@ namespace a
             }
         }
 
-        private void ConstructResponse(dynamic json, out Response response)
+        private void ConstructResponse(Request json, out Response response)
         {
             response = new Response();
 
@@ -89,35 +90,17 @@ namespace a
                 // Fail early (with try-catch) 
                 // if we can't access them
 
-                string method = "";
-                string path = "";
-                int date = -1;
-                try
-                {
-                    method = json.method;
-                }
-                catch
-                {
+                string method = json.Method ?? "";
+                string path = json.Path ?? "";
+                int date = Convert.ToInt32(json.Date ?? "0");
+
+                if (json.Method == null)
                     response.AddError("Missing Method");
-                }
-
-                try
-                {
-                    path = json.path;
-                }
-                catch
-                {
+                if (json.Path == null)
                     response.AddError("Missing Resource");
-                }
-
-                try
-                {
-                    date = json.date;
-                }
-                catch
-                {
+                if (json.Date == null)
                     response.AddError("Missing Date");
-                }
+                    
 
                 // Get the last segment of path
                 string lastToken = Path.GetFileName(path);
@@ -161,14 +144,13 @@ namespace a
                     // Do not allow the user to give an id
                     if (lastToken != "categories")
                     {
-                        response.Status = Response.StatusCode.BadRequest;
-                        response.Reasons.Add("Bad Request");
+                        response.AddError("Bad Request");
                     }
                     else
                     {
                         // Create a new category with the given name
                         // And return the newly created object
-                        dynamic input = JsonConvert.DeserializeObject<dynamic>(json.body);
+                        dynamic input = JsonConvert.DeserializeObject<dynamic>(json.Body);
                         Category newCat = Category.Create(input.name);
 
                         response.Status = Response.StatusCode.Created;
@@ -186,8 +168,7 @@ namespace a
                     {
                         // TODO: Not sure if we should check if the ids match?
 
-                        string body = json.body;
-                        var cat = JsonConvert.DeserializeObject<Category>(body);
+                        var cat = JsonConvert.DeserializeObject<Category>(json.Body);
 
                         // Database was correctly updated
                         if (Category.Update(cat))
@@ -225,7 +206,7 @@ namespace a
                 // Invalid method
                 else
                 {
-                    response.AddError("Illegal Method");
+                    response.AddError("Missing Method");
                 }
             }
             // Something was wrong
