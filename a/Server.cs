@@ -184,9 +184,8 @@ namespace a
 
                     if (!error)
                     {
-                        // TODO: Not sure if we should check if the ids match?
-
                         var cat = JsonConvert.DeserializeObject<Category>(json.Body);
+                        cat.Id = id.Value;
 
                         // Database was correctly updated
                         if (Category.Update(cat))
