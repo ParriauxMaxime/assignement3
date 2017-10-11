@@ -96,10 +96,12 @@ namespace a
 
                 if (json.Method == null)
                     response.AddError("Missing Method");
-                if (json.Path == null)
+                if (json.Path == null && method != "echo") // Edge case for echo
                     response.AddError("Missing Resource");
                 if (json.Date == null)
                     response.AddError("Missing Date");
+
+
                     
 
                 // Get the last segment of path
@@ -159,6 +161,7 @@ namespace a
                     {
                         // Create a new category with the given name
                         // And return the newly created object
+
                         dynamic input = JsonConvert.DeserializeObject<dynamic>(json.Body);
                         Category newCat = Category.Create((string)input.name);
 
@@ -218,6 +221,18 @@ namespace a
                         {
                             response.Status = Response.StatusCode.NotFound;
                         }
+                    }
+                }
+                else if (method == "echo")
+                {
+                    if (json.Body == null)
+                    {
+                        response.AddError("Missing Body");
+                    }
+                    else
+                    {
+                        response.Status = Response.StatusCode.Ok;
+                        response.Body = json.Body;
                     }
                 }
                 // Invalid method
@@ -342,18 +357,12 @@ namespace a
 
             // Include body in the answer if it's not null
             // ignore it otherwise
-            object response;
-            if (Body != null)
-                response = new
-                {
-                    status = statusString,
-                    body = JsonConvert.SerializeObject(Body)
-                };
-            else
-                response = new
-                {
-                    status = statusString
-                };
+            var response = new
+            {
+                status = statusString,
+                body = Body is string || Body is null ? Body : 
+                    JsonConvert.SerializeObject(Body)
+            };
 
             return JsonConvert.SerializeObject(response);
         }
