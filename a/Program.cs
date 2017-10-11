@@ -6,35 +6,31 @@ namespace a
     class Program
     {
         //Code is dirty, who cares, it's C#.
-
         static void Main(string[] args)
         {
-            //IPHostEntry heserver = Dns.GetHostEntry(Dns.GetHostName());
-            //foreach (IPAddress curAdd in heserver.AddressList)
-            //{
-            Server server = new Server(IPAddress.Loopback, 5000);
-                server.Start();
-                Console.WriteLine("Press q to exit");
-                while (true)
-                {
-                    try
-                    {
+            Server server = new Server(IPAddress.Any, 5000);
+            server.Start();
+            Console.WriteLine("Press q to exit");
 
-                        char c = (char)Console.ReadLine()[0];
-                        if (c == 'q')
-                        {
-                            server.Stop();
-                            break;
-                        }
-                    }
-                    catch (Exception)
+
+            while (true)
+            {
+                try
+                {
+
+                    if (Console.ReadKey().KeyChar == 'q')
                     {
-                        //who cares ?
+                        server.Stop();
+                        return;
                     }
                 }
-            //}
-
+                catch (Exception)
+                {
+                    //who cares ?
+                }
+            }
         }
 
     }
+
 }
