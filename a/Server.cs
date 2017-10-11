@@ -173,7 +173,7 @@ namespace a
                     // Should give an id
                     if (id == null)
                     {
-                        response.AddError("Missing Resource");
+                        response.AddError("Bad Request");
                         error = true;
                     }
                     if (json.Body == null)
@@ -205,7 +205,7 @@ namespace a
                     // Should give an id
                     if (id == null) 
                     {
-                        response.AddError("Missing Resource");
+                        response.AddError("Bad Request");
                     }
                     else
                     {
