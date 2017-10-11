@@ -151,7 +151,7 @@ namespace a
                         // Create a new category with the given name
                         // And return the newly created object
                         dynamic input = JsonConvert.DeserializeObject<dynamic>(json.Body);
-                        Category newCat = Category.Create(input.name);
+                        Category newCat = Category.Create((string)input.name);
 
                         response.Status = Response.StatusCode.Created;
                         response.Body = newCat;
@@ -213,7 +213,7 @@ namespace a
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                response.AddError("Bad Request");
+                response.AddError("Really Bad Request");
             }
         }
 
