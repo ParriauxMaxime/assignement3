@@ -68,29 +68,37 @@ namespace a
 
                 Response response = new Response();
 
-                if (json.method == "read") {
+                if (json.method == "read") 
+                {
                     string path = json.path;
-                    string end = Path.GetFileName(path);
+                    string lastToken = Path.GetFileName(path);
 
-
-                    if (end == "categories")
+                    if (lastToken == "categories")
                     {
                         response.Status = Response.StatusCode.Ok;
                         response.Body = Category.Data;
-
                     } 
-                    else if (int.TryParse(end, out var id))
+                    else if (int.TryParse(lastToken, out int id))
                     {
-                        response.Status = Response.StatusCode.Ok;
                         var cat = Category.Data.Find(x => x.Id == id);
-                        response.Body = cat;
+
+                        if (cat != null) 
+                        {
+                            response.Status = Response.StatusCode.Ok;
+                            response.Body = cat;
+                        }
+                        // Category not found
+                        else
+                        {
+                            response.Status = Response.StatusCode.NotFound;
+                        }
                     }
                 }
+               
 
                 Send(client, response.ToJson());
 
-                client.GetStream().Close();
-                client.Dispose();
+                client.Close();
             }
             catch (Exception e)
             {
@@ -108,6 +116,8 @@ namespace a
         {
             var response = Encoding.UTF8.GetBytes(data);
             strm.Write(response, 0, response.Length);
+
+            Console.WriteLine($"Writing {data}");
         }
 
         static string Read(NetworkStream strm, int size)
@@ -150,7 +160,7 @@ namespace a
         };
 
         public List<string> Reasons = new List<string>();
-        public object Body;
+        public object Body = null;
         private StatusCode _status;
 
         public StatusCode Status
@@ -159,6 +169,8 @@ namespace a
             set
             {
                 _status = value;
+                // Automatically give friendly names to status codes
+                // If it's not a BadRequest
                 switch (value)
                 {
                     case StatusCode.Ok:
@@ -184,14 +196,25 @@ namespace a
 
         public string ToJson()
         {
+            // Prepare the Status String according to the assignment's paper
             string statusString = (int)Status + " ";
             statusString += string.Join(", ", Reasons.ToArray());
 
-            var response = new
-            {
-                status = statusString,
-                body = JsonConvert.SerializeObject(Body)
-            };
+            // Include body in the answer if it's not null
+            // ignore it otherwise
+            object response;
+            if (Body != null)
+                response = new
+                {
+                    status = statusString,
+                    body = JsonConvert.SerializeObject(Body)
+                };
+            else
+                response = new
+                {
+                    status = statusString
+                };
+
             return JsonConvert.SerializeObject(response);
         }
 
