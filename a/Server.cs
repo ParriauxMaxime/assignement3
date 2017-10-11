@@ -141,12 +141,21 @@ namespace a
                 }
                 else if (method == "create")
                 {
+                    bool error = false;
+
                     // Do not allow the user to give an id
                     if (lastToken != "categories")
                     {
                         response.AddError("Bad Request");
+                        error = true;
                     }
-                    else
+                    if (json.Body == null)
+                    {
+                        response.AddError("Missing Body");
+                        error = true;
+                    }
+
+                    if (!error)
                     {
                         // Create a new category with the given name
                         // And return the newly created object
@@ -159,12 +168,21 @@ namespace a
                 }
                 else if (method == "update")
                 {
+                    bool error = false;
+
                     // Should give an id
                     if (id == null)
                     {
                         response.AddError("Missing Resource");
+                        error = true;
                     }
-                    else
+                    if (json.Body == null)
+                    {
+                        response.AddError("Missing Body");
+                        error = true;
+                    }
+
+                    if (!error)
                     {
                         // TODO: Not sure if we should check if the ids match?
 
