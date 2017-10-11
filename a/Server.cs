@@ -85,19 +85,26 @@ namespace a
 
             try
             {
+                // These fields are Required
+                // Fail early (with try-catch) 
+                // if we can't access them
                 string method = json.method;
                 string path   = json.path;
                 int    date   = json.date;
 
+                // Get the last segment of path
                 string lastToken = Path.GetFileName(path);
 
+                // Respond according to the method
                 if (method == "read")
                 {
+                    // Return all categories
                     if (lastToken == "categories")
                     {
                         response.Status = Response.StatusCode.Ok;
                         response.Body = Category.Data;
                     }
+                    // Return specific category with an id
                     else if (int.TryParse(lastToken, out int id))
                     {
                         var cat = Category.Data.Find(x => x.Id == id);
@@ -113,6 +120,7 @@ namespace a
                             response.Status = Response.StatusCode.NotFound;
                         }
                     }
+                    // Invalid method
                     else
                     {
                         throw new Exception();
@@ -120,11 +128,14 @@ namespace a
                 }
                 else if (method == "create")
                 {
+                    // Do not allow the user to give an id
                     if (lastToken != "categories")
                     {
                         throw new Exception();
                     }
 
+                    // Create a new category with the given name
+                    // And return the newly created object
                     dynamic input = JsonConvert.DeserializeObject<dynamic>(json.body);
                     Category newCat = Category.Create(input.name);
 
@@ -132,6 +143,7 @@ namespace a
                     response.Body = newCat;
                 }
             }
+            // Something was wrong
             catch
             {
                 response.Status = Response.StatusCode.BadRequest;
