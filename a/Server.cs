@@ -136,7 +136,7 @@ namespace a
                     // Invalid request
                     else
                     {
-                        response.AddError("Missing Resource");
+                        response.AddError("Bad Request");
                     }
                 }
                 else if (method == "create")
