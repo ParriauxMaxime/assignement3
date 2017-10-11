@@ -33,6 +33,20 @@ namespace a
 
             return cat;
         }
+
+        // Try to find the item and if it exists
+        // Change its name and return true,
+        // Otherwise return false
+        public static bool Update(Category item)
+        {
+            var cat = Data.Find(x => x.Id == item.Id);
+            if (cat == null) 
+                return false;
+
+            cat.Name = item.Name;
+
+            return true;
+        }
     }
 
 }

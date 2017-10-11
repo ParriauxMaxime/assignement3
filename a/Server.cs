@@ -120,7 +120,7 @@ namespace a
                             response.Status = Response.StatusCode.NotFound;
                         }
                     }
-                    // Invalid method
+                    // Invalid request
                     else
                     {
                         throw new Exception();
@@ -142,10 +142,40 @@ namespace a
                     response.Status = Response.StatusCode.Created;
                     response.Body = newCat;
                 }
+                else if (method == "update")
+                {
+                    // Should give an id
+                    if (!int.TryParse(lastToken, out int id))
+                    {
+                        throw new Exception();
+                    }
+
+                    // TODO: Not sure if we should check if the ids match?
+
+                    string body = json.body;
+                    var cat = JsonConvert.DeserializeObject<Category>(body);
+
+                    // Database was correctly updated
+                    if (Category.Update(cat))
+                    {
+                        response.Status = Response.StatusCode.Updated;
+                    }
+                    // Item does not exist
+                    else
+                    {
+                        response.Status = Response.StatusCode.NotFound;
+                    }
+                }
+                // Invalid method
+                else
+                {
+                    throw new Exception();
+                }
             }
             // Something was wrong
-            catch
+            catch (Exception e)
             {
+                Console.WriteLine(e);
                 response.Status = Response.StatusCode.BadRequest;
                 response.Reasons.Add("Bad Request");
             }
