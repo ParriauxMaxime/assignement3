@@ -79,8 +79,6 @@ namespace a
             }
         }
 
-        private class BadRequestException : Exception { }
-
         private void ConstructResponse(dynamic json, out Response response)
         {
             response = new Response();
@@ -90,9 +88,36 @@ namespace a
                 // These fields are Required
                 // Fail early (with try-catch) 
                 // if we can't access them
-                string method = json.method;
-                string path   = json.path;
-                int    date   = json.date;
+
+                string method = "";
+                string path = "";
+                int date = -1;
+                try
+                {
+                    method = json.method;
+                }
+                catch
+                {
+                    response.AddError("Missing Method");
+                }
+
+                try
+                {
+                    path = json.path;
+                }
+                catch
+                {
+                    response.AddError("Missing Resource");
+                }
+
+                try
+                {
+                    date = json.date;
+                }
+                catch
+                {
+                    response.AddError("Missing Date");
+                }
 
                 // Get the last segment of path
                 string lastToken = Path.GetFileName(path);
@@ -128,73 +153,86 @@ namespace a
                     // Invalid request
                     else
                     {
-                        throw new BadRequestException();
+                        response.AddError("Missing Resource");
                     }
                 }
                 else if (method == "create")
                 {
                     // Do not allow the user to give an id
                     if (lastToken != "categories")
-                        throw new BadRequestException();
+                    {
+                        response.Status = Response.StatusCode.BadRequest;
+                        response.Reasons.Add("Bad Request");
+                    }
+                    else
+                    {
+                        // Create a new category with the given name
+                        // And return the newly created object
+                        dynamic input = JsonConvert.DeserializeObject<dynamic>(json.body);
+                        Category newCat = Category.Create(input.name);
 
-                    // Create a new category with the given name
-                    // And return the newly created object
-                    dynamic input = JsonConvert.DeserializeObject<dynamic>(json.body);
-                    Category newCat = Category.Create(input.name);
-
-                    response.Status = Response.StatusCode.Created;
-                    response.Body = newCat;
+                        response.Status = Response.StatusCode.Created;
+                        response.Body = newCat;
+                    }
                 }
                 else if (method == "update")
                 {
                     // Should give an id
                     if (id == null)
-                        throw new BadRequestException();
-
-                    // TODO: Not sure if we should check if the ids match?
-
-                    string body = json.body;
-                    var cat = JsonConvert.DeserializeObject<Category>(body);
-
-                    // Database was correctly updated
-                    if (Category.Update(cat))
                     {
-                        response.Status = Response.StatusCode.Updated;
+                        response.AddError("Missing Resource");
                     }
-                    // Item does not exist
                     else
                     {
-                        response.Status = Response.StatusCode.NotFound;
+                        // TODO: Not sure if we should check if the ids match?
+
+                        string body = json.body;
+                        var cat = JsonConvert.DeserializeObject<Category>(body);
+
+                        // Database was correctly updated
+                        if (Category.Update(cat))
+                        {
+                            response.Status = Response.StatusCode.Updated;
+                        }
+                        // Item does not exist
+                        else
+                        {
+                            response.Status = Response.StatusCode.NotFound;
+                        }
                     }
                 }
                 else if (method == "delete")
                 {
-                    if (id == null)
-                        throw new BadRequestException();
-
-                    // Database was correctly updated
-                    if (Category.Delete(id.Value))
+                    // Should give an id
+                    if (id == null) 
                     {
-                        response.Status = Response.StatusCode.Ok;
+                        response.AddError("Missing Resource");
                     }
-                    // Item does not exist
                     else
                     {
-                        response.Status = Response.StatusCode.NotFound;
+                        // Database was correctly updated
+                        if (Category.Delete(id.Value))
+                        {
+                            response.Status = Response.StatusCode.Ok;
+                        }
+                        // Item does not exist
+                        else
+                        {
+                            response.Status = Response.StatusCode.NotFound;
+                        }
                     }
                 }
                 // Invalid method
                 else
                 {
-                    throw new BadRequestException();
+                    response.AddError("Illegal Method");
                 }
             }
             // Something was wrong
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                response.Status = Response.StatusCode.BadRequest;
-                response.Reasons.Add("Bad Request");
+                response.AddError("Bad Request");
             }
         }
 
@@ -259,6 +297,9 @@ namespace a
             get { return _status; }
             set
             {
+                if (_status == StatusCode.BadRequest)
+                    return;
+                
                 _status = value;
                 // Automatically give friendly names to status codes
                 // If it's not a BadRequest
@@ -283,6 +324,12 @@ namespace a
                         break;
                 }
             }
+        }
+
+        public void AddError(string reason)
+        {
+            Status = StatusCode.BadRequest;
+            Reasons.Add(reason);
         }
 
         public string ToJson()
