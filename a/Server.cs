@@ -224,7 +224,7 @@ namespace a
                 // Invalid method
                 else
                 {
-                    response.AddError("Missing Method");
+                    response.AddError("Illegal Method");
                 }
             }
             // Something was wrong
