@@ -227,6 +227,10 @@ namespace a
                     response.AddError("Illegal Method");
                 }
             }
+            catch (Newtonsoft.Json.JsonReaderException)
+            {
+                response.AddError("Illegal Body");
+            }
             // Something was wrong
             catch (Exception e)
             {
