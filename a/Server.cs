@@ -54,8 +54,6 @@ namespace a
                     thread.Start(client);
                 }
             }, TaskCreationOptions.LongRunning);
-
-            Console.WriteLine("anan");
         }
 
         void handleRequest(object clientObj)
@@ -152,6 +150,7 @@ namespace a
         };
 
         public List<string> Reasons = new List<string>();
+        public object Body;
         private StatusCode _status;
 
         public StatusCode Status
@@ -182,14 +181,11 @@ namespace a
                 }
             }
         }
-        
-
-        public object Body;
 
         public string ToJson()
         {
-            string statusString = Status.ToString() + " ";
-            statusString = string.Join(", ", Reasons.ToArray());
+            string statusString = (int)Status + " ";
+            statusString += string.Join(", ", Reasons.ToArray());
 
             var response = new
             {
