@@ -92,7 +92,7 @@ namespace a
 
                 string method = json.Method ?? "";
                 string path = json.Path ?? "";
-                int date = Convert.ToInt32(json.Date ?? "0");
+                int date;
 
                 if (json.Method == null)
                     response.AddError("Missing Method");
@@ -100,10 +100,9 @@ namespace a
                     response.AddError("Missing Resource");
                 if (json.Date == null)
                     response.AddError("Missing Date");
-
-
-                    
-
+                if (!int.TryParse(json.Date, out date))
+                    response.AddError("Illegal Date");
+                
                 // Get the last segment of path
                 string lastToken = Path.GetFileName(path);
 
