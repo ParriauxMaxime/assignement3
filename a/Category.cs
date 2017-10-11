@@ -44,7 +44,19 @@ namespace a
                 return false;
 
             cat.Name = item.Name;
+            return true;
+        }
 
+        // Try to delete the item if it exists
+        // and return true,
+        // Otherwise return false
+        public static bool Delete(int id)
+        {
+            var cat = Data.Find(x => x.Id == id);
+            if (cat == null)
+                return false;
+
+            Data.Remove(cat);
             return true;
         }
     }

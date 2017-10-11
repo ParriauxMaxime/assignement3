@@ -79,6 +79,8 @@ namespace a
             }
         }
 
+        private class BadRequestException : Exception { }
+
         private void ConstructResponse(dynamic json, out Response response)
         {
             response = new Response();
@@ -95,6 +97,9 @@ namespace a
                 // Get the last segment of path
                 string lastToken = Path.GetFileName(path);
 
+                // Stupid syntax for such a simple thing
+                int? id = int.TryParse(lastToken, out int i) ? (int?)i : null;
+
                 // Respond according to the method
                 if (method == "read")
                 {
@@ -105,7 +110,7 @@ namespace a
                         response.Body = Category.Data;
                     }
                     // Return specific category with an id
-                    else if (int.TryParse(lastToken, out int id))
+                    else if (id != null)
                     {
                         var cat = Category.Data.Find(x => x.Id == id);
 
@@ -123,16 +128,14 @@ namespace a
                     // Invalid request
                     else
                     {
-                        throw new Exception();
+                        throw new BadRequestException();
                     }
                 }
                 else if (method == "create")
                 {
                     // Do not allow the user to give an id
                     if (lastToken != "categories")
-                    {
-                        throw new Exception();
-                    }
+                        throw new BadRequestException();
 
                     // Create a new category with the given name
                     // And return the newly created object
@@ -145,10 +148,8 @@ namespace a
                 else if (method == "update")
                 {
                     // Should give an id
-                    if (!int.TryParse(lastToken, out int id))
-                    {
-                        throw new Exception();
-                    }
+                    if (id == null)
+                        throw new BadRequestException();
 
                     // TODO: Not sure if we should check if the ids match?
 
@@ -166,10 +167,26 @@ namespace a
                         response.Status = Response.StatusCode.NotFound;
                     }
                 }
+                else if (method == "delete")
+                {
+                    if (id == null)
+                        throw new BadRequestException();
+
+                    // Database was correctly updated
+                    if (Category.Delete(id.Value))
+                    {
+                        response.Status = Response.StatusCode.Ok;
+                    }
+                    // Item does not exist
+                    else
+                    {
+                        response.Status = Response.StatusCode.NotFound;
+                    }
+                }
                 // Invalid method
                 else
                 {
-                    throw new Exception();
+                    throw new BadRequestException();
                 }
             }
             // Something was wrong
