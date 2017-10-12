@@ -19,6 +19,7 @@ namespace a
 
         private TcpListener _tcpListener;
         private bool _isRunning = false;
+        private Mutex _mutex = new Mutex();
 
         public Server(IPAddress address, Int32 port)
         {
@@ -61,15 +62,20 @@ namespace a
             if (clientObj is null) return;
             if (!(clientObj is TcpClient client)) return;
 
+            
+
             try
             {
                 string requestString = Read(client);
                 Console.WriteLine($"Got {requestString}");
                 Request json = JsonConvert.DeserializeObject<Request>(requestString);
 
+                
                 ConstructResponse(json, out Response response);
 
+                _mutex.WaitOne();
                 Send(client, response.ToJson());
+                _mutex.ReleaseMutex();
 
                 client.Close();
             }
@@ -78,6 +84,8 @@ namespace a
                 Console.WriteLine(e);
                 //throw;
             }
+
+            
         }
 
         private void ConstructResponse(Request json, out Response response)
